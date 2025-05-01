@@ -21,8 +21,6 @@
       height: 100vh;
       overflow: hidden;
       transition: all 0.3s ease-in-out;
-      flex-direction: column;
-      justify-content: space-between;
     }
 
     canvas {
@@ -118,36 +116,6 @@
       color: #2c3e50;
     }
 
-    /* Style for mobile buttons */
-    .mobile-controls {
-      display: flex;
-      justify-content: space-around;
-      width: 100%;
-      position: absolute;
-      bottom: 20px;
-    }
-
-    .mobile-controls button {
-      width: 80px;
-      height: 80px;
-      border-radius: 50%;
-      background-color: #007bff;
-      border: none;
-      color: white;
-      font-size: 24px;
-      cursor: pointer;
-      transition: background-color 0.3s ease;
-    }
-
-    .mobile-controls button:hover {
-      background-color: #0056b3;
-    }
-
-    .mobile-controls #shootBtn {
-      width: 100px;
-      height: 100px;
-      background-color: #ffcc00;
-    }
   </style>
 </head>
 <body>
@@ -176,13 +144,6 @@
     Game Over
   </div>
 
-  <!-- Mobile Controls -->
-  <div class="mobile-controls hidden" id="mobileControls">
-    <button id="leftBtn">←</button>
-    <button id="shootBtn">🚀</button>
-    <button id="rightBtn">→</button>
-  </div>
-
   <script>
     const canvas = document.getElementById("gameCanvas");
     const ctx = canvas.getContext("2d");
@@ -194,7 +155,6 @@
     const livesDisplay = document.getElementById("lives");
     const levelDisplay = document.getElementById("level");
     const playerNameDisplay = document.getElementById("playerNameDisplay");
-    const mobileControls = document.getElementById("mobileControls");
 
     let playerName = "";
     let playerX, playerY;
@@ -219,22 +179,6 @@
     let barricades = [];
     let currentTheme = "dark";
     let gigaBoss = null;
-
-    // Add mobile control listeners
-    document.getElementById("leftBtn").addEventListener("click", () => {
-      leftPressed = true;
-      setTimeout(() => leftPressed = false, 100);
-    });
-
-    document.getElementById("rightBtn").addEventListener("click", () => {
-      rightPressed = true;
-      setTimeout(() => rightPressed = false, 100);
-    });
-
-    document.getElementById("shootBtn").addEventListener("click", () => {
-      spacePressed = true;
-      setTimeout(() => spacePressed = false, 100);
-    });
 
     document.addEventListener("keydown", (e) => {
       if (e.key === "ArrowRight") rightPressed = true;
@@ -277,7 +221,6 @@
       menu.classList.add("hidden");
       canvas.classList.remove("hidden");
       gameInfo.classList.remove("hidden");
-      mobileControls.classList.remove("hidden");
       playerX = canvas.width / 2 - playerWidth / 2;
       playerY = canvas.height - playerHeight - 30;
       bullets = [];
@@ -467,45 +410,56 @@
 
       ctx.fillStyle = "#FF0000";
       bullets.forEach(bullet => {
+        bullet.y -= 7;
         ctx.fillRect(bullet.x, bullet.y, bullet.width, bullet.height);
-        bullet.y -= 10;
       });
 
-      ctx.fillStyle = "#FF0000";
-      invaderBullets.forEach(bullet => {
-        ctx.fillRect(bullet.x, bullet.y, bullet.width, bullet.height);
-        bullet.y += 4;
-      });
-
-      ctx.fillStyle = "#00FFFF";
+      ctx.fillStyle = "#FF4444";
       invaders.forEach(inv => {
         ctx.fillRect(inv.x, inv.y, inv.width, inv.height);
       });
 
-      if (extremeMode && level === 10) {
-        createGigaBoss();
-        ctx.fillStyle = "#ff00ff";
+      ctx.fillStyle = "#00FFFF";
+      invaderBullets.forEach(b => {
+        b.y += 3;
+        ctx.fillRect(b.x, b.y, b.width, b.height);
+      });
+
+      ctx.fillStyle = "#CCCC00";
+      barricades.forEach(block => {
+        ctx.fillRect(block.x, block.y, block.width, block.height);
+      });
+
+      if (gigaBoss) {
+        ctx.fillStyle = "red";
         ctx.fillRect(gigaBoss.x, gigaBoss.y, gigaBoss.width, gigaBoss.height);
       }
+
+      scoreDisplay.textContent = `Score: ${score}`;
+      livesDisplay.textContent = `Vies: ${lives}`;
+      levelDisplay.textContent = `Niveau: ${level}`;
 
       moveInvaders();
       moveGigaBoss();
       checkCollisions();
 
-      scoreDisplay.textContent = `Score: ${score}`;
-      livesDisplay.textContent = `Vies: ${lives}`;
-      levelDisplay.textContent = `Niveau: ${level}`;
-      
       if (invaders.length === 0 && !gigaBoss) {
         level++;
+        if (level % 10 === 0) {
+          createGigaBoss();
+        }
+        if (!extremeMode) lives++;
+        invaderSpeed += extremeMode ? 0.5 : 0.2;
         createInvaders();
+        createBarricades();
       }
 
-      if (lives <= 0 || gameOver) {
-        gameOverText.classList.remove("hidden");
-      } else {
-        requestAnimationFrame(draw);
+      if (gigaBoss && gigaBoss.health <= 0) {
+        score += 500;
+        gigaBoss = null;
       }
+
+      requestAnimationFrame(draw);
     }
   </script>
 </body>
